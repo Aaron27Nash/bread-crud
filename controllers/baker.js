@@ -1,10 +1,19 @@
 const router = require ( 'express').Router()
 const Baker = require('../models/bakers')
+const Bread = require ('../models/bread')
 const bakerSeedData = require('../models/bakerSeedData')
+const breadSeedData = require('../models/breadSeedData')
 
-router.get('/data/seed' , async (req, res) => {
-    await Baker.deleteMany()
-    await Baker.insertMany(bakerSeedData)
+
+router.get('/data/seed', async (req, res) => {
+    await Promise.all([Baker.deleteMany(),  Bread.deleteMany()])
+    const bakers = await Baker.insertMany(bakerSeedData)
+    const bakerIds = bakers.map(baker => baker._id)
+    breadSeedData.forEach(bread => {
+        const randomIndex = Math.floor(Math.random() * bakers.length)
+        bread.baker = bakerIds[randomIndex]
+    })
+    await Bread.insertMany(breadSeedData)
     res.redirect('/breads')
 })
 
